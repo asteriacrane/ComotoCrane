@@ -1,0 +1,552 @@
+
+R version 4.1.0 (2021-05-18) -- "Camp Pontanezen"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Workspace loaded from ~/.RData]
+
+> Items <- read.csv("C:/Users/Asteria/Downloads/Items.txt", header=FALSE)
+Warning message:
+In scan(file = file, what = what, sep = sep, quote = quote, dec = dec,  :
+  EOF within quoted string
+>   View(Items)
+> data
+    SalesOrder    SKU                         Description
+1       580636  22474             SPACEBOY TV DINNER TRAY
+2       581426  70006            LOVE HEART POCKET WARMER
+3       575063  22697     GREEN REGENCY TEACUP AND SAUCER
+4       544065  20726                  LUNCH BAG WOODLAND
+5       568896 85049E           SCANDINAVIAN REDS RIBBONS
+6       559542  23209           LUNCH BAG DOILEY PATTERN 
+7       569868  23493     VINTAGE DOILY TRAVEL SEWING KIT
+8       575303  23321         SMALL WHITE HEART OF WICKER
+9       567145  21154           RED RETROSPOT OVEN GLOVE 
+10      574444  21967            PACK OF 12 SKULL TISSUES
+11      552732  23172              REGENCY TEA PLATE PINK
+12      577359  22727           ALARM CLOCK BAKELIKE RED 
+13      566364  22564              ALPHABET STENCIL CRAFT
+14      580670  22865              HAND WARMER OWL DESIGN
+15      560566  20677                  PINK POLKADOT BOWL
+16      580362  22632           HAND WARMER RED RETROSPOT
+17      580956  22678       FRENCH BLUE METAL DOOR SIGN 3
+18      569728  23322         LARGE WHITE HEART OF WICKER
+19      570672  22689        DOORMAT MERRY CHRISTMAS RED 
+20      550994  82486   WOOD S/3 CABINET ANT WHITE FINISH
+21      563558  23344           JUMBO BAG 50'S CHRISTMAS 
+22      567126 84997C     CHILDRENS CUTLERY POLKADOT BLUE
+23      568671  84978    HANGING HEART JAR T-LIGHT HOLDER
+24      572280  22355           CHARLOTTE BAG SUKI DESIGN
+25      567809  22560          TRADITIONAL MODELLING CLAY
+26      578349  23570    TRADITIONAL PICK UP STICKS GAME 
+27      551994  22698      PINK REGENCY TEACUP AND SAUCER
+28      558919  22386             JUMBO BAG PINK POLKADOT
+29      563209  22149          FELTCRAFT 6 FLOWER FRIENDS
+30      577778  22212          FOUR HOOK  WHITE LOVEBIRDS
+31      548327  20971    PINK BLUE FELT CRAFT TRINKET BOX
+32      549690  21983    PACK OF 12 BLUE PAISLEY TISSUES 
+33      559679  22720   SET OF 3 CAKE TINS PANTRY DESIGN 
+34      538104  22816                CARD MOTORBIKE SANTA
+35      543300  22301        COFFEE MUG CAT + BIRD DESIGN
+36      566234  72817 SET OF 2 CHRISTMAS DECOUPAGE CANDLE
+37      564553  84947   ANTIQUE SILVER TEA GLASS ENGRAVED
+38      568193  22687           DOORMAT CHRISTMAS VILLAGE
+39      569252  23071   MARIE ANTOINETTE TRINKET BOX GOLD
+40      555545  23204         CHARLOTTE BAG APPLES DESIGN
+41      580676  20794                     BLUE  TILE HOOK
+42      545693  21244                BLUE POLKADOT PLATE 
+43      542080  20712          JUMBO BAG WOODLAND ANIMALS
+44      573548  23272   TREE T-LIGHT HOLDER WILLIE WINKIE
+45      548733  21906             PHARMACIE FIRST AID TIN
+46      568727  21169     YOU'RE CONFUSING ME METAL SIGN 
+47      556465  84880               WHITE WIRE EGG HOLDER
+48      574290  21695      SMALL SILVER FLOWER CANDLE POT
+49      559132  23077                 DOUGHNUT LIP GLOSS 
+50      561220  22972             CHILDREN'S SPACEBOY MUG
+51      577106  20712          JUMBO BAG WOODLAND ANIMALS
+52      571054  23139         SINGLE WIRE HOOK PINK HEART
+53      572871  20725             LUNCH BAG RED RETROSPOT
+54      565327  21790                  VINTAGE SNAP CARDS
+55      580062  23406          HOME SWEET HOME KEY HOLDER
+56      549985 84536A       ENGLISH ROSE NOTEBOOK A7 SIZE
+57      567659  21891    TRADITIONAL WOODEN SKIPPING ROPE
+58      579094  23114       VINTAGE LEAF CHOPPING BOARD  
+59      545328  21718              RED METAL BEACH SPADE 
+60      541266  21621          VINTAGE UNION JACK BUNTING
+61      562258  22197                      POPCORN HOLDER
+62      553891  22698      PINK REGENCY TEACUP AND SAUCER
+63      564846  21034        REX CASH+CARRY JUMBO SHOPPER
+64      567656  20679               EDWARDIAN PARASOL RED
+65      575760  23392        SPACEBOY ROCKET LOLLY MAKERS
+66      552843 84970S   HANGING HEART ZINC T-LIGHT HOLDER
+67      564660  22303            COFFEE MUG APPLES DESIGN
+68      578270  22980              PANTRY SCRUBBING BRUSH
+69      540288  22665   RECIPE BOX BLUE SKETCHBOOK DESIGN
+70      550344  22561         WOODEN SCHOOL COLOURING SET
+71      569319 85049A       TRADITIONAL CHRISTMAS RIBBONS
+72      576559  22601      CHRISTMAS RETROSPOT ANGEL WOOD
+73      576065  47566                       PARTY BUNTING
+74      561113  79321                       CHILLI LIGHTS
+75      555947  21287       SCENTED VELVET LOUNGE CANDLE 
+76      557299  23032     DRAWER KNOB CRACKLE GLAZE IVORY
+77      550994  85066         CREAM SWEETHEART MINI CHEST
+78      571743  84991         60 TEATIME FAIRY CAKE CASES
+79      576779  82486 3 DRAWER ANTIQUE WHITE WOOD CABINET
+80      566962  84836         ZINC METAL HEART DECORATION
+81      562584  22083           PAPER CHAIN KIT RETROSPOT
+82      572319  21620     SET OF 4 ROSE BOTANICAL CANDLES
+83      544391  22507        MEMO BOARD RETROSPOT  DESIGN
+84      551966  22356         CHARLOTTE BAG PINK POLKADOT
+85      572669  84992      72 SWEETHEART FAIRY CAKE CASES
+86      572866  20727             LUNCH BAG  BLACK SKULL.
+87      546437  22630                DOLLY GIRL LUNCH BOX
+88      543349  20769                      DAISY JOURNAL 
+89      561507  22483             RED GINGHAM TEDDY BEAR 
+90      566586  22737      RIBBON REEL CHRISTMAS PRESENT 
+91      568188  23198      PANTRY MAGNETIC  SHOPPING LIST
+92      555798  21080 SET/20 RED RETROSPOT PAPER NAPKINS 
+93      552831 84971S           SMALL HEART FLOWERS HOOK 
+94      572073  23453           OVAL  MINI PORTRAIT FRAME
+95      555539  22219  LOVEBIRD HANGING DECORATION WHITE 
+96      557270  22171    3 HOOK PHOTO SHELF ANTIQUE WHITE
+97      538371  21216    SET 3 RETROSPOT TEA,COFFEE,SUGAR
+98      536971  22969        HOMEMADE JAM SCENTED CANDLES
+99      554955  22662         LUNCH BAG DOLLY GIRL DESIGN
+100     577723  21916     SET 12 RETRO WHITE CHALK STICKS
+    UnitPrice CustomerID        Channel State InvoiceDay
+1        1.95      16746        Mailing    IL 2011-12-05
+2        0.79      17757 Organic Social    WA 2011-12-08
+3        2.95      16764        Display    TX 2011-11-08
+4        1.65      14346 Organic Social    TX 2011-02-15
+5        1.25      16361          Store    NY 2011-09-29
+6        1.65      17126          Email    CA 2011-07-10
+7        1.95      13018 Organic Social    MO 2011-10-06
+8        1.65      12893          Store    IA 2011-11-09
+9        1.25      12921 Organic Social    AK 2011-09-16
+10       0.39      18122          Store    CA 2011-11-04
+11       1.65      17428            SEO    NH 2011-05-11
+12       3.75      14903          Store    PA 2011-11-18
+13       1.25      15253            SEO    VA 2011-09-12
+14       2.10      18044          Store    TX 2011-12-05
+15       1.25      12662            SEO    CA 2011-07-19
+16       2.10      13884          Email    GA 2011-12-02
+17       1.25      17841            SEO    LA 2011-12-06
+18       2.95      15416        Mailing    MI 2011-10-06
+19       8.25      12536            SEO    WI 2011-10-11
+20       8.95      14562          Store    VA 2011-04-21
+21       2.08      14156          Email    GA 2011-08-17
+22       4.15      17238          Email    FL 2011-09-16
+23       1.06      13139          Email    TX 2011-09-28
+24       0.85      16007            SEO    WA 2011-10-23
+25       1.25      13804          Store    CA 2011-09-22
+26       1.25      14539 Organic Social    PA 2011-11-24
+27       2.95      12868            SEO    VA 2011-05-05
+28       2.08      15078 Organic Social    TX 2011-07-05
+29       2.10      13527            SEO    FL 2011-08-14
+30       2.10      16549          Store    NY 2011-11-21
+31       1.25      16788          Store    GA 2011-03-30
+32       0.29      17841 Organic Social    LA 2011-04-11
+33       4.95      15265 Organic Social    OH 2011-07-11
+34       0.42      17950 Organic Social    TX 2010-12-09
+35       2.55      13334            SEO    MO 2011-02-07
+36       1.25      15035          Email    NY 2011-09-11
+37       1.25      18200            SEO    KS 2011-08-25
+38       8.25      17107 Organic Social    NC 2011-09-25
+39      12.50      14333          Email    NJ 2011-10-03
+40       0.85      17735        Mailing    TX 2011-06-05
+41       2.55      17817          Store    TX 2011-12-05
+42       1.45      16422          Store    PA 2011-03-06
+43       1.95      13815 Organic Social    HI 2011-01-25
+44       1.65      13680          Store    AK 2011-10-31
+45       6.75      17648          Store    KY 2011-04-04
+46       1.69      15796          Store    WA 2011-09-28
+47       7.50      14984            SEO    WI 2011-06-12
+48       2.95      17403          Email    OH 2011-11-03
+49       1.25      15053          Email    KY 2011-07-06
+50       1.65      17734 Organic Social    FL 2011-07-26
+51       2.08      14456            SEO    OH 2011-11-17
+52       1.45      14234        Display    MI 2011-10-13
+53       1.65      13408          Store    CO 2011-10-26
+54       0.85      12832          Store    TX 2011-09-02
+55       6.25      15862            SEO    FL 2011-12-01
+56       0.42      15640          Store    GA 2011-04-13
+57       1.45      17475            SEO    OH 2011-09-21
+58       4.95      12668        Display    FL 2011-11-28
+59       1.25      16389          Store    OR 2011-03-01
+60       8.50      15673          Store    CA 2011-01-16
+61       0.85      16348 Organic Social    CO 2011-08-03
+62       2.95      16839 Organic Social    TX 2011-05-19
+63       0.95      14507            SEO    CA 2011-08-30
+64      12.46      14096          Store    TX 2011-09-21
+65       2.08      15965 Organic Social    AZ 2011-11-11
+66       0.85      14649          Store    RI 2011-05-11
+67       2.55      15074          Store    MN 2011-08-26
+68       3.29      14096 Organic Social    TX 2011-11-23
+69       2.95      17634 Organic Social    CA 2011-01-06
+70       1.45      12754          Store    KY 2011-04-18
+71       1.25      14290            SEO    GA 2011-10-03
+72       0.85      14711          Email    OH 2011-11-15
+73       4.95      15005          Store    CA 2011-11-13
+74       5.75      17841            SEO    LA 2011-07-25
+75       0.38      14911 Organic Social    CA 2011-06-08
+76       1.65      13047          Store    CA 2011-06-19
+77      12.75      14562            SEO    VA 2011-04-21
+78       0.55      15853          Email    CA 2011-10-19
+79       8.95      14554 Organic Social    MI 2011-11-16
+80       1.25      16764 Organic Social    TX 2011-09-15
+81       2.95      13752            SEO    KS 2011-08-07
+82       1.25      14704            SEO    MS 2011-10-23
+83       4.95      15755 Organic Social    IN 2011-02-18
+84       0.85      15356 Organic Social    TX 2011-05-05
+85       0.55      16549          Store    NY 2011-10-25
+86       1.65      15005          Store    CA 2011-10-26
+87       1.95      16807 Organic Social    TX 2011-03-14
+88       2.55      17774 Organic Social    NY 2011-02-07
+89       2.95      12397 Organic Social    NC 2011-07-27
+90       1.65      12619          Email    IL 2011-09-13
+91       1.45      16049          Email    TN 2011-09-25
+92       0.72      16422        Mailing    PA 2011-06-07
+93       0.85      13052        Mailing    ID 2011-05-11
+94       1.95      13263          Store    NV 2011-10-20
+95       0.85      14472          Store    SC 2011-06-05
+96       8.50      14162 Organic Social    GA 2011-06-19
+97       4.95      15570            SEO    NH 2010-12-12
+98       1.45      12779 Organic Social    FL 2010-12-03
+99       1.65      17412          Store    TN 2011-05-27
+100      0.42      16713 Organic Social    MA 2011-11-21
+     Sales Quantity
+1    31.20       16
+2     2.37        3
+3     8.85        3
+4    13.20        8
+5    52.50       42
+6     9.90        6
+7    15.60        8
+8    13.20        8
+9    10.00        8
+10   39.78      102
+11  113.85       69
+12   60.00       16
+13   73.75       59
+14  184.80       88
+15   75.00       60
+16   50.40       24
+17    8.75        7
+18   32.45       11
+19   41.25        5
+20   17.90        2
+21   41.60       20
+22   16.60        4
+23   76.32       72
+24    8.50       10
+25  245.00      196
+26   11.25        9
+27  132.75       45
+28   16.64        8
+29   18.90        9
+30   16.80        8
+31   11.25        9
+32    0.29        1
+33    9.90        2
+34    3.78        9
+35  114.75       45
+36   30.00       24
+37   37.50       30
+38   16.50        2
+39  100.00        8
+40    6.80        8
+41   17.85        7
+42  285.65      197
+43   15.60        8
+44   42.90       26
+45   27.00        4
+46  169.00      100
+47   30.00        4
+48   35.40       12
+49   50.00       40
+50   14.85        9
+51   12.48        6
+52    1.45        1
+53  425.70      258
+54   74.80       88
+55   25.00        4
+56   11.34       27
+57  100.05       69
+58    9.90        2
+59   12.50       10
+60  119.00       14
+61    1.70        2
+62   14.75        5
+63    6.65        7
+64   99.68        8
+65    2.08        1
+66   25.50       30
+67  107.10       42
+68    3.29        1
+69    2.95        1
+70  952.65      657
+71   35.00       28
+72    1.70        2
+73   84.15       17
+74   34.50        6
+75   21.28       56
+76   34.65       21
+77   38.25        3
+78    1.10        2
+79   17.90        2
+80    1.25        1
+81   56.05       19
+82    6.25        5
+83   14.85        3
+84    2.55        3
+85    9.35       17
+86   28.05       17
+87   17.55        9
+88    5.10        2
+89   14.75        5
+90   33.00       20
+91    5.80        4
+92   56.88       79
+93    1.70        2
+94   17.55        9
+95   12.75       15
+96   17.00        2
+97   14.85        3
+98   13.05        9
+99   46.20       28
+100   0.84        2
+ [ reached 'max' / getOption("max.print") -- omitted 406729 rows ]
+> Items$V1 <- sub("RT.*:", "", Items$V1)
+> Items$V1 <- sub("@.* ", "", Items$V1)
+> text_cleaning_tokens <- Items %>% 
++     tidytext::unnest_tokens(word, text)
+Error in Items %>% tidytext::unnest_tokens(word, text) : 
+  could not find function "%>%"
+> library(tidyverse)
+-- Attaching packages --------------------- tidyverse 1.3.1 --
+v ggplot2 3.3.5     v purrr   0.3.4
+v tibble  3.1.3     v dplyr   1.0.7
+v tidyr   1.1.3     v stringr 1.4.0
+v readr   2.0.1     v forcats 0.5.1
+-- Conflicts ------------------------ tidyverse_conflicts() --
+x dplyr::filter() masks stats::filter()
+x dplyr::lag()    masks stats::lag()
+Warning message:
+package ‘readr’ was built under R version 4.1.1 
+> text_cleaning_tokens <- Items %>% 
++     tidytext::unnest_tokens(word, text)
+Error: Must extract column with a single valid subscript.
+x Subscript `var` has the wrong type `function`.
+i It must be numeric or character.
+Run `rlang::last_error()` to see where the error occurred.
+> text_cleaning_tokens <- Items$V1 %>% 
++     tidytext::unnest_tokens(word, text)
+Error in UseMethod("pull") : 
+  no applicable method for 'pull' applied to an object of class "character"
+> Items$index<-1:nrow(Items)
+> text_cleaning_tokens <- Items %>% 
++     tidytext::unnest_tokens(word, text)
+Error: Must extract column with a single valid subscript.
+x Subscript `var` has the wrong type `function`.
+i It must be numeric or character.
+Run `rlang::last_error()` to see where the error occurred.
+> text_cleaning_tokens <- Items %>% 
++     tidytext::unnest_tokens(word, V1)
+> text_cleaning_tokens$word <- gsub('[[:digit:]]+', '', text_cleaning_tokens$word)
+> text_cleaning_tokens$word <- gsub('[[:punct:]]+', '', text_cleaning_tokens$word)
+> text_cleaning_tokens <- text_cleaning_tokens %>% filter(!(nchar(word) == 1))%>% 
++     anti_join(stop_words)
+Error in is.data.frame(y) : object 'stop_words' not found
+> tokens <- text_cleaning_tokens %>% filter(!(word==""))
+> tokens <- tokens %>% mutate(ind = row_number())
+> tokens <- tokens %>% group_by(id) %>% mutate(ind = row_number()) %>%
++     tidyr::spread(key = ind, value = word)
+Error: Must group by variables found in `.data`.
+* Column `id` is not found.
+Run `rlang::last_error()` to see where the error occurred.
+> tokens <- tokens %>% group_by(index) %>% mutate(ind = row_number()) %>%
++     tidyr::spread(key = ind, value = word)
+> tokens [is.na(tokens)] <- ""
+> 
+> tokens <- tidyr::unite(tokens, text,-id,sep =" " )''
+Error: unexpected string constant in "tokens <- tidyr::unite(tokens, text,-id,sep =" " )''"
+> tokens <- tidyr::unite(tokens, text,-id,sep =" " )
+Error: Can't subset columns that don't exist.
+x Column `id` doesn't exist.
+Run `rlang::last_error()` to see where the error occurred.
+> tokens <- tidyr::unite(tokens, text,-index,sep =" " )
+> tokens$text <- trimws(tokens$text)
+> View(tokens)
+> dtm <- CreateDtm(tokens$text, 
++                  doc_names = tokens$ID, 
++                  ngram_window = c(1, 2))
+Error in CreateDtm(tokens$text, doc_names = tokens$ID, ngram_window = c(1,  : 
+  could not find function "CreateDtm"
+> library(textmineR)
+Error in library(textmineR) : there is no package called ‘textmineR’
+> install.packages("textmineR")
+Installing package into ‘C:/Users/Asteria/Documents/R/win-library/4.1’
+(as ‘lib’ is unspecified)
+also installing the dependencies ‘float’, ‘RhpcBLASctl’, ‘rsparse’, ‘mlapi’, ‘lgr’, ‘ISOcodes’, ‘RcppEigen’, ‘gtools’, ‘text2vec’, ‘stopwords’, ‘RcppProgress’, ‘RSpectra’
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/float_0.2-4.zip'
+Content type 'application/zip' length 3961337 bytes (3.8 MB)
+downloaded 3.8 MB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/RhpcBLASctl_0.20-137.zip'
+Content type 'application/zip' length 150574 bytes (147 KB)
+downloaded 147 KB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/rsparse_0.4.0.zip'
+Content type 'application/zip' length 3366917 bytes (3.2 MB)
+downloaded 3.2 MB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/mlapi_0.1.0.zip'
+Content type 'application/zip' length 232358 bytes (226 KB)
+downloaded 226 KB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/lgr_0.4.2.zip'
+Content type 'application/zip' length 1378431 bytes (1.3 MB)
+downloaded 1.3 MB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/ISOcodes_2021.02.24.zip'
+Content type 'application/zip' length 307326 bytes (300 KB)
+downloaded 300 KB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/RcppEigen_0.3.3.9.1.zip'
+Content type 'application/zip' length 2869797 bytes (2.7 MB)
+downloaded 2.7 MB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/gtools_3.9.2.zip'
+Content type 'application/zip' length 366947 bytes (358 KB)
+downloaded 358 KB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/text2vec_0.6.zip'
+Content type 'application/zip' length 5307039 bytes (5.1 MB)
+downloaded 5.1 MB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/stopwords_2.2.zip'
+Content type 'application/zip' length 226994 bytes (221 KB)
+downloaded 221 KB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/RcppProgress_0.4.2.zip'
+Content type 'application/zip' length 33950 bytes (33 KB)
+downloaded 33 KB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/RSpectra_0.16-0.zip'
+Content type 'application/zip' length 1461300 bytes (1.4 MB)
+downloaded 1.4 MB
+
+trying URL 'https://cran.microsoft.com/bin/windows/contrib/4.1/textmineR_3.0.5.zip'
+Content type 'application/zip' length 2291092 bytes (2.2 MB)
+downloaded 2.2 MB
+
+package ‘float’ successfully unpacked and MD5 sums checked
+package ‘RhpcBLASctl’ successfully unpacked and MD5 sums checked
+package ‘rsparse’ successfully unpacked and MD5 sums checked
+package ‘mlapi’ successfully unpacked and MD5 sums checked
+package ‘lgr’ successfully unpacked and MD5 sums checked
+package ‘ISOcodes’ successfully unpacked and MD5 sums checked
+package ‘RcppEigen’ successfully unpacked and MD5 sums checked
+package ‘gtools’ successfully unpacked and MD5 sums checked
+package ‘text2vec’ successfully unpacked and MD5 sums checked
+package ‘stopwords’ successfully unpacked and MD5 sums checked
+package ‘RcppProgress’ successfully unpacked and MD5 sums checked
+package ‘RSpectra’ successfully unpacked and MD5 sums checked
+package ‘textmineR’ successfully unpacked and MD5 sums checked
+
+The downloaded binary packages are in
+	C:\Users\Asteria\AppData\Local\Temp\RtmpWEVFth\downloaded_packages
+> library(textmineR)
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following objects are masked from ‘package:tidyr’:
+
+    expand, pack, unpack
+
+
+Attaching package: ‘textmineR’
+
+The following object is masked from ‘package:Matrix’:
+
+    update
+
+The following object is masked from ‘package:stats’:
+
+    update
+
+> dtm <- CreateDtm(tokens$text, 
++                  doc_names = tokens$ID, 
++                  ngram_window = c(1, 2))
+Warning messages:
+1: Unknown or uninitialised column: `ID`. 
+2: In CreateDtm(tokens$text, doc_names = tokens$ID, ngram_window = c(1,  :
+  No document names detected. Assigning 1:length(doc_vec) as names.
+> tf <- TermDocFreq(dtm = dtm)
+> original_tf <- tf %>% select(term, term_freq,doc_freq)
+> rownames(original_tf) <- 1:nrow(original_tf)
+Warning message:
+Setting row names on a tibble is deprecated. 
+> vocabulary <- tf$term[ tf$term_freq > 1 & tf$doc_freq < nrow(dtm) / 2 ]
+> dtm = dtm
+> k_list <- seq(1, 20, by = 1)
+> model_dir <- paste0("models_", digest::digest(vocabulary, algo = "sha1"))
+> if (!dir.exists(model_dir)) dir.create(model_dir)
+> model_list <- TmParallelApply(X = k_list, FUN = function(k){
++     filename = file.path(model_dir, paste0(k, "_topics.rda"))
++ if (!file.exists(filename)) {
++     m <- FitLdaModel(dtm = dtm, k = k, iterations = 500)
++     m$k <- k
++     m$coherence <- CalcProbCoherence(phi = m$phi, dtm = dtm, M = 5)
++     save(m, file = filename)
++ } else {
++     load(filename)
++ }
++ 
++ m
++ }, export=c("dtm", "model_dir")) # export only needed for Windows machines
+> #model tuning
+> #choosing the best model
+> coherence_mat <- data.frame(k = sapply(model_list, function(x) nrow(x$phi)), 
++                             coherence = sapply(model_list, function(x) mean(x$coherence)), 
++                             stringsAsFactors = FALSE)
+> ggplot(coherence_mat, aes(x = k, y = coherence)) +
++     geom_point() +
++     geom_line(group = 1)+
++     ggtitle("Best Topic by Coherence Score") + theme_minimal() +
++     scale_x_continuous(breaks = seq(1,20,1)) + ylab("Coherence")
+> coherence_mat
+    k  coherence
+1   1 0.01271859
+2   2 0.03282196
+3   3 0.10955624
+4   4 0.13377060
+5   5 0.12254963
+6   6 0.13954807
+7   7 0.13833258
+8   8 0.10205516
+9   9 0.14100130
+10 10 0.14944856
+11 11 0.12261849
+12 12 0.15725011
+13 13 0.18163161
+14 14 0.14018643
+15 15 0.14860540
+16 16 0.14993223
+17 17 0.15692628
+18 18 0.16465124
+19 19 0.16386508
+20 20 0.16170552

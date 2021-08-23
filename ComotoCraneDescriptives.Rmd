@@ -1,0 +1,172 @@
+---
+title: "Comoto Prompt"
+author: "Malia Crane"
+date: "8/21/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+data <- read.csv("C:/Users/Asteria/Downloads/ecom_data.csv", row.names=NULL, stringsAsFactors=TRUE)
+data$CustomerID<-as.factor(data$CustomerID)
+data$InvoiceDay<-as.Date(data$InvoiceDay)
+data$InvoiceDay<-as.POSIXct(data$InvoiceDay,format="%Y-%M-%D")
+
+subset(data,InvoiceDay>="2010-12-01" & InvoiceDay<="2011-03-01")
+```
+
+<!--->
+Corrected dataframe removes:
+  Sales Orders with C-Prefix
+  Sales without any value (zeroes)
+  SKU's M and PADS (the rest of the others were removed with C-Prefixes)
+  
+  subset(data,InvoiceDay>="2010-12-01" & InvoiceDay<="2011-03-01")
+<!--->
+
+### Overview of Received Dataset 
+
+Consists of a total of 406,829 rows associated with sales transactions captured along 10 variables.
+
+Every observed variable consisted of complete cases with no missing data.
+
+***
+
+#### Variables - Descriptions
+
+## Channel
+
+A total of 6 different marketing source channels were captured, and which comprised 69,016 unique sales orders.
+
+: Table 1-A: Channel Counts
+
+Channel|Row Count|%|Sales Orders Count|Sales Order %
+:---:|:---:|:---:|:---:|:---:
+Display|3,970|00.98%|2,237|3.24%
+Email|36,576|08.99%|10,712|15.52%
+Mailing|20,361|05.00%|7,763|11.25%
+Organic Social|121,971|29.98%|16,476|23.87%
+SEO|81,946|20.14%|14,765|21.44%
+Store|142,005|34.91%|17,033|24.68%
+
+***
+
+## SalesOrder
+
+A total of 20,665 unique sales orders were identified, 2,813 (13.61%) of which begin with the prefix character 'C'- seemingly associated with compensatory, refund, or expense transactions having negative sales values.
+
+The following table summarizes these C-Prefix orders by source channel:
+
+: Table 1-B: C-Prefix Sales Orders by Source Channel[^1]
+
+Channel|Sum of Sales|Number of Sales Orders
+:---:|:---:|:---:
+Display|-1,677.21|41
+Mailing|-21,448.96|271
+Email|-49.046.86|437
+SEO|-213,777.39|905
+Organic Social|-324,196.59|1,184
+Store|-707,625.59|1,353
+
+[^1]:Table 1-B: It should be noted that the Standard Deviation of Sales amounts generally increases alongside Sum of Sales, but is notably higher for Organic Social and Store Channels- indicating less regularity with these channels.
+
+
+Sales orders without this prefix totaled 17,852 (86.39%) sales orders having positive sales values, with 6 orders having total sales values of zero.
+
+: Table 1-C: Non-C-Prefix Sales Orders by Source Channel[^2]
+
+Channel|Sum of Sales|Number of Sales Orders
+:---:|:---:|:---:
+Display|141,388.43|2,196
+Mailing|567,320.21|7,492
+Email|1,553,915.40|10,275
+Organic Social|2,481,832.47|15,292
+SEO|7,859,744.17|13,890
+Store|15,978,984.97|15,680
+
+[^2]:Table 1-C: Standard Deviation of Sales amounts is notably higher for Organic Social (indicating highly variable sales totals), and notable lower for SEO channels (indicating unusually regular sales totals).
+
+***
+
+## SKU
+
+A total of 3,610 unique SKU's were identified, including 8 special SKU's consisting of characters which imply adjustments, fee tracking, postage, or other process transations outside of sales figures.
+
+: Table 1-D: Unusual SKU's
+
+SKU|Rows|% of Subset|Total Sales
+:---:|:---:|:---:|:---:
+POST|1162|61.00%|205,640.10
+M|462|24.30%|-175,860.34
+C2|149|07.80%|20,933.00
+D|86|04.50%|-13,220.09
+CRUK|19|01.00%|-54,069.55
+DOT|16|00.80%|101,333.35
+BANK CHARGES|9|00.50%|465.00
+PADS|2|00.10%|0
+
+***
+
+## Description
+
+A total of 3,791 unique item descriptions were found, with 100% of rows accounted for, which differed by 181 from the count of unique SKUs, indicating a small degree of divergence from the larger pattern of each SKU representing a unique item.
+
+Using item descriptions, cursory topic modelling was attempted using Latent Dirichlet Allocation (LDA), but results were not well classified after examination and are presented only as a record of the attempt.
+
+![Coherence Scores by Number of k Topics](C:/Users/Asteria/Documents/Topics by Coherence Score.png) ![Dendrogram of 13 topics' relationships](C:/Users/Asteria/Documents/Dendrogram.png)
+
+
+Coherence scores shown above suggested 13 topic areas. As seen below, these outputted topic areas were a poor fit for classifying items due to the inconsistent groupings of the top 5 entries for each area.
+
+```{r Topic Groups, echo=FALSE,include=TRUE}
+topics<-read.csv("C:/Users/Asteria/Downloads/semantics.csv",header=TRUE)
+head(topics,n=5)
+```
+
+***
+
+## UnitPrice
+
+Per-Unit prices varied from 38,970 to 0, having a median unit price of 1.95.
+
+## CustomerID
+
+A total of 4,325 unique ID's were identified. Customer #14646 is associated with the highest sum Sales (1,102,131).
+
+
+## State
+
+A total of 49 US States were identified.
+
+## InvoiceDay
+
+Data comprises a temporal interval of 374 days from 01/12/2010 to 09/12/2011, with 4 full 90 day groups.
+
+A 5th group comprised of the 'most recent' 90 days from the last date in the file was also created.
+
+To accurately forecast predictions, this 5th group is not included as a part of the forecasting method.
+
+Group|From|To|Interval
+:---:|:---:|:---:|:---:
+1|11/30/2010|02/28/2011|90
+2|02/28/2011|05/29/2011|90
+3|05/29/2011|08/27/2011|90
+4|08/27/2011|11/25/2011|90
+5|09/09/2011|12/8/2011|90
+
+
+## Sales
+
+Sales ranged from -127,788.96 to 127,788.96, highlighting the inclusion of C-Prefixed sales orders indicating refunds.
+
+Excluding these entries, Sales ranged from 0 to 127,788.96 with a median of 22.46.Grouping by Sales Orders indicated a median order value of 34.8, and grouping by CustomerID gives a median sale value of 32.5.
+
+The median for total sales by customer indicate a point estimate for each customer's total sales being a contribution of 2,291.95 (i.e. During the data's timeframe, a single customer can be expected to purchase 2.2k on average).
+
+## Quantity
+
+Quantities ordered possessed a median of 9 items per row, when grouping by Sales Order a median of 21.65 items per order, and when grouped by Customer a median of 15 items are purchased.
+
+

@@ -1,0 +1,96 @@
+---
+title: "Comoto Prompt"
+author: "Malia Crane"
+date: "8/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(zoo)
+```
+
+```{r 90 Days Setup, include=TRUE}
+
+data <- read.csv("C:/Users/Asteria/Downloads/ecom_data.csv", row.names=NULL, stringsAsFactors=TRUE)
+data$CustomerID<-as.factor(data$CustomerID)
+data$InvoiceDay<-as.Date(data$InvoiceDay)
+data$InvoiceDay<-as.POSIXct(data$InvoiceDay,format="%Y-%M-%D")
+data$ID <- as.character(seq.int(nrow(data)))
+
+#Create first 90-day temporal group
+data%>%
+  filter(Sales>0 & InvoiceDay>="2010-11-30" &InvoiceDay<"2011-02-28" )%>%         group_by(CustomerID)%>% mutate(TGroup1=n_distinct(SalesOrder))->y
+y<-as.data.frame(y)
+left_join(x=data,y=y,by=c("SalesOrder", "SKU", "Description", "UnitPrice", "CustomerID", "Channel", "State", "InvoiceDay", "Sales", "Quantity", "ID"))->data
+
+#Second Group
+data%>%
+  filter(Sales>0 & InvoiceDay>="2011-02-28" &InvoiceDay<"2011-05-29" )%>%         group_by(CustomerID)%>% mutate(TGroup2=n_distinct(SalesOrder))->y
+y<-as.data.frame(y)
+left_join(x=data,y=y,by=c("SalesOrder", "SKU", "Description", "UnitPrice", "CustomerID", "Channel", "State", "InvoiceDay", "Sales", "Quantity", "ID","TGroup1"))->data
+#Third Group
+data%>%
+  filter(Sales>0 & InvoiceDay>="2011-05-29" &InvoiceDay<"2011-08-27" )%>%         group_by(CustomerID)%>% mutate(TGroup3=n_distinct(SalesOrder))->y
+y<-as.data.frame(y)
+left_join(x=data,y=y,by=c("SalesOrder", "SKU", "Description", "UnitPrice", "CustomerID", "Channel", "State", "InvoiceDay", "Sales", "Quantity", "ID","TGroup1","TGroup2"))->data
+#Fourth Group
+data%>%
+  filter(Sales>0 & InvoiceDay>="2011-08-27" &InvoiceDay<"2011-11-25" )%>%         group_by(CustomerID)%>% mutate(TGroup4=n_distinct(SalesOrder))->y
+y<-as.data.frame(y)
+left_join(x=data,y=y,by=c("SalesOrder", "SKU", "Description", "UnitPrice", "CustomerID", "Channel", "State", "InvoiceDay", "Sales", "Quantity", "ID","TGroup1","TGroup2","TGroup3"))->data
+
+#Fifth Group - 
+  #Or, How I'd setup the pipeline to pull from the last 90 days.
+  #Since 2011 is much more than 90 days from 2021, instead of a today()      datetime I use the last date in the dataset with max(), pretending that today is the last date captured in the data.
+a<-as.POSIXlt(max(data$InvoiceDay))
+a$mday<-a$mday-90
+
+data%>%
+  filter(Sales>0 & InvoiceDay>=a)%>%
+  group_by(CustomerID)%>% mutate(TGroup5=n_distinct(SalesOrder))->y
+y<-as.data.frame(y)
+left_join(x=data,y=y,by=c("SalesOrder", "SKU", "Description", "UnitPrice", "CustomerID", "Channel", "State", "InvoiceDay", "Sales", "Quantity", "ID","TGroup1","TGroup2","TGroup3","TGroup4"))->data
+```
+
+```{r Time Series Tibble,include=TRUE}
+library(lubridate)
+#Creating the time series here as requested, including Channel
+data%>%
+  filter(Sales>0)%>%
+  select(InvoiceDay,Channel,Sales)%>%
+  arrange(Channel,InvoiceDay,Sales)%>%
+  mutate(month=month(InvoiceDay),year=year(InvoiceDay))%>%
+  group_by(year,month,Channel)%>%
+  summarise(SumSales=sum(Sales))%>%
+  arrange(year,month,SumSales)->tsdata
+
+tsdata$tsunit<-paste(paste(tsdata$year,"-"),tsdata$month)
+tsdata[,c(ncol(tsdata),1:(ncol(tsdata)-1))]->tsdata
+tsdata$year<-NULL
+tsdata$month<-NULL
+tsdata%>%arrange(Channel,tsunit)->tsdata
+
+#Creating a higher order series that includes Channel by State
+data%>%
+  filter(Sales>0)%>%
+  select(InvoiceDay,Channel,Sales,State)%>%
+  arrange(Channel,State,InvoiceDay,Sales)%>%
+  mutate(month=month(InvoiceDay),year=year(InvoiceDay))%>%
+  group_by(year,month,Channel,State)%>%
+  summarise(SumSales=sum(Sales))%>%
+  arrange(year,month,SumSales)->tsdatalocs
+
+tsdatalocs$tsunit<-paste(paste(tsdatalocs$year,"-"),tsdatalocs$month)
+tsdatalocs[,c(ncol(tsdatalocs),1:(ncol(tsdatalocs)-1))]->tsdatalocs
+tsdatalocs$year<-NULL
+tsdatalocs$month<-NULL
+tsdatalocs%>%arrange(Channel,State,tsunit)->tsdatalocs
+```
+
+```{r Time Series Descriptives,include=TRUE}
+#Begin decomposing and exploring options, saving good stuff here.
+
+```
