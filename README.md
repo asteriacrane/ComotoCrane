@@ -1,2 +1,2 @@
-# ComotoCrane
- Comoto Prompt
+# Comoto Technical Challenge 
+# Malia Crane
