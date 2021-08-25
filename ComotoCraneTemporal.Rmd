@@ -1,25 +1,35 @@
 ---
-title: "Comoto Prompt"
+title: "Comoto Time Series"
 author: "Malia Crane"
-date: "8/22/2021"
+date: "8/23/2021"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
+#Load required libraries
 library(tidyverse)
 library(zoo)
+library(tsibble)
+library(forecast)
+library(fpp3)
+library(fable)
+library(lubridate)
 ```
 
-```{r 90 Days Setup, include=TRUE}
+### Section A - Customer Orders
 
-data <- read.csv("C:/Users/Asteria/Downloads/ecom_data.csv", row.names=NULL, stringsAsFactors=TRUE)
+```{r 90 Days Setup, include=TRUE,results='hide'}
+#Import Data, classify column data types
+data <- read.csv("C:/Users/cran5028/Downloads/ComotoCrane-main/ecom_data.csv", row.names=NULL, stringsAsFactors=TRUE)
 data$CustomerID<-as.factor(data$CustomerID)
 data$InvoiceDay<-as.Date(data$InvoiceDay)
 data$InvoiceDay<-as.POSIXct(data$InvoiceDay,format="%Y-%M-%D")
 data$ID <- as.character(seq.int(nrow(data)))
 
+#Filter out identified issues with data, negative sales amounts and SKU outliers:
+data%>%filter(Sales >0)->data
+data[!(data$SKU=="C2" | data$SKU=="BANK CHARGES" | data$SKU=="CRUK" | data$SKU=="D" | data$SKU=="DOT" | data$SKU=="M" | data$SKU=="PADS" | data$SKU=="POST"),]->data
+droplevels(data$SKU)
 #Create first 90-day temporal group
 data%>%
   filter(Sales>0 & InvoiceDay>="2010-11-30" &InvoiceDay<"2011-02-28" )%>%         group_by(CustomerID)%>% mutate(TGroup1=n_distinct(SalesOrder))->y
@@ -44,20 +54,43 @@ left_join(x=data,y=y,by=c("SalesOrder", "SKU", "Description", "UnitPrice", "Cust
 
 #Fifth Group - 
   #Or, How I'd setup the pipeline to pull from the last 90 days.
-  #Since 2011 is much more than 90 days from 2021, instead of a today()      datetime I use the last date in the dataset with max(), pretending that today is the last date captured in the data.
+  #Since 2011 is much more than 90 days from 2021, instead of a today() datetime I use the last date in the dataset with max(), pretending that today is the last date captured in the data and making the script estimate 90 days from the end of any imported data that I'd pass through it.
+
 a<-as.POSIXlt(max(data$InvoiceDay))
 a$mday<-a$mday-90
-
+#Create TSGroup 5
 data%>%
   filter(Sales>0 & InvoiceDay>=a)%>%
   group_by(CustomerID)%>% mutate(TGroup5=n_distinct(SalesOrder))->y
 y<-as.data.frame(y)
 left_join(x=data,y=y,by=c("SalesOrder", "SKU", "Description", "UnitPrice", "CustomerID", "Channel", "State", "InvoiceDay", "Sales", "Quantity", "ID","TGroup1","TGroup2","TGroup3","TGroup4"))->data
+a<-NULL
 ```
 
-```{r Time Series Tibble,include=TRUE}
-library(lubridate)
-#Creating the time series here as requested, including Channel
+### Summary
+
+1. Starting with fresh data, I've removed entries which include refunds or fees paid by selecting out negative sales amounts and unusual SKU's.
+2. Each of the Tgroups brought into 'data' represent the number of purchases made, by grouping on CustomerID and counting the number of distinct SalesOrders.
+  i) The fifth group is purely a demonstration to approach the 'rolling 90 day window' question, and could be used to automatically create the past 90 days of purchases, but is not used in the forecast.
+
+  
+90 Day Time Segmentation Group|	From|	To|	Days Interval
+---:|:---:|:---:|:---
+Tgroup1|	11/30/2010|	2/28/2011|	90
+Tgroup2|	2/28/2011|	5/29/2011|	90
+Tgroup3|	5/29/2011|	8/27/2011|	90
+Tgroup4|	8/27/2011|	11/25/2011|	90
+Tgroup5|	11/25/2011|	12/8/2011|	13
+
+```{r Non-Refunded Orders by Customer, include=TRUE}
+#Omit %>%head() to see them all 
+data%>%group_by(CustomerID)%>%select(CustomerID,TGroup1,TGroup2,TGroup3,TGroup4,TGroup5)%>%head()
+```
+
+### Create time series
+
+```{r Setup,include=TRUE,results=FALSE,message=FALSE}
+#Creating the time series here as requested, including Channel data as a measure.
 data%>%
   filter(Sales>0)%>%
   select(InvoiceDay,Channel,Sales)%>%
@@ -67,30 +100,319 @@ data%>%
   summarise(SumSales=sum(Sales))%>%
   arrange(year,month,SumSales)->tsdata
 
+#Making a better looking date column for visuals.
 tsdata$tsunit<-paste(paste(tsdata$year,"-"),tsdata$month)
 tsdata[,c(ncol(tsdata),1:(ncol(tsdata)-1))]->tsdata
 tsdata$year<-NULL
 tsdata$month<-NULL
 tsdata%>%arrange(Channel,tsunit)->tsdata
 
-#Creating a higher order series that includes Channel by State
-data%>%
-  filter(Sales>0)%>%
-  select(InvoiceDay,Channel,Sales,State)%>%
-  arrange(Channel,State,InvoiceDay,Sales)%>%
-  mutate(month=month(InvoiceDay),year=year(InvoiceDay))%>%
-  group_by(year,month,Channel,State)%>%
-  summarise(SumSales=sum(Sales))%>%
-  arrange(year,month,SumSales)->tsdatalocs
+tsdata%>%
+mutate(Month=yearmonth(tsunit))%>%
+as_tsibble(index=Month,key=Channel)->tsdata
 
-tsdatalocs$tsunit<-paste(paste(tsdatalocs$year,"-"),tsdatalocs$month)
-tsdatalocs[,c(ncol(tsdatalocs),1:(ncol(tsdatalocs)-1))]->tsdatalocs
-tsdatalocs$year<-NULL
-tsdatalocs$month<-NULL
-tsdatalocs%>%arrange(Channel,State,tsunit)->tsdatalocs
+#Remove extraneous column
+tsdata$tsunit<-NULL
 ```
 
-```{r Time Series Descriptives,include=TRUE}
+### Section C - Forecasting
+
+```{r Forecasting,include=TRUE,warning=FALSE}
 #Begin decomposing and exploring options, saving good stuff here.
 
+#Sanity Check, plot temporal series along SumSales by Channel.
+
+autoplot(tsdata,SumSales)+labs(title="Sum of Sales by Month and Channel",y="Sum of Sales",x="1 Month Scaling")
+
+#I can see initially here that Store and SEO are going to need to be modeled differently, their trends are clearly different from other channels.
+tsdata%>%filter(Channel=="Store")->Sdata
+tsdata%>%filter(!Channel=="Store")->tsdata
+tsdata%>%filter(Channel=="SEO")->SEOdata
+tsdata%>%filter(!Channel=="SEO")->tsdata
+
+#Also separating out Organic Social due to reasons detailed later on
+tsdata%>%filter(Channel=="Organic Social")->OSdata
+tsdata%>%filter(!Channel=="Organic Social")->tsdata
+
+
+#The first thing to consider is the stationarity of the time series, examined by autocorrelations.
+#Single plots are made as such
+par(mfrow=c(3,2))
+acf(tsdata[tsdata$Channel=="Display",])
+acf(tsdata[tsdata$Channel=="Email",])
+acf(tsdata[tsdata$Channel=="Mailing",])
+acf(SEOdata)
+acf(OSdata)
+acf(Sdata)
+par(mfrow=c(1,1))
+#Store and Mailing have ACF plots which take two lags to reach autocorrelations below threshold, but with the KPSS test below it does not appear to be a substantial enough deviation to account for.
+
+#Since this is unclear, I'll use the Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test instead.
+#Email, Display, Mailing Channels
+tsdata%>%
+features(SumSales,unitroot_kpss)
+#Store Channel
+Sdata%>%
+features(SumSales,unitroot_kpss)
+#SEO Channel
+SEOdata%>%
+     features(SumSales,unitroot_kpss)
+#Organic Social Channel
+OSdata%>%
+features(SumSales,unitroot_kpss)
+#Results indicate all but organic Social are stationary series, good for forecasting with. 
+
+#Let's see what needs to be done to reach stationarity for Organic Social
+OSdata%>%
+     features(SumSales,unitroot_ndiffs)
+#Indicates a difference of 1 for Organic Social is all that's needed.
+
+OSdata%>%
+  mutate(diff_SumSales=difference(SumSales))->OSdata
+#Differenced time points for this channel mean that this channel's forecasts are now representing changes from the last month, rather than representing total sales amounts.
+OSdata%>%
+    features(diff_SumSales,unitroot_kpss)
+#We now have stationarity.
+ #Clean up data
+OSdata$SumSales<-NULL
+na.omit(OSdata)->OSdata
+
+#The differencing of just one unit results in a situation where I have to either impute the missing value or keep the models separate due to them now existing on different temporal frames.
+#I'm going to go with keeping them separate and avoid unnecessary assumptions, as I've done with Store Channel
+#Cleanup old factor levels
+droplevels(tsdata)->tsdata
 ```
+
+### Forecasting Summary
+1. At the outset, it's immediately clear with Store and SEO have far higher variance and range than others, and are radically different trends than the other channels, so they are separated out early to be analyzed differently.
+2. Every channel but Organic Social were stationary time series at the outset, so only Organic Social is differenced. The differencing process changes the number of time units available, as well as the type of model in action 'under the hood'- so this channel is also separated out.
+
+
+
+### Decomposition
+
+```{r Decomposition, include=TRUE}
+############
+#At this stage, Sdata holds Store, OSdata holds Organic Social, and tsdata holds all other channels
+############
+#Beginning Decomposition
+tsdata%>%model(stl=STL(SumSales))%>%
+  components(tsdata)%>%
+  autoplot(SumSales)->tsdcmp
+tsdcmp+labs(title="Display,Email,and Mailing Decomposition",x="1 Month Scaling")
+#Email,Display, and Mailing are consistent over time with higher sales increases for Mailing over Display, and Email over both. Another notable drop at the end of the series as seen for each channel.
+
+SEOdata%>%model(stl=STL(SumSales))%>%
+  components(SEOdata)%>%
+  autoplot(SumSales)->SEOdcmp
+SEOdcmp+labs(title="SEO Decomposition",x="1 Month Scaling")
+#SEO has a generallly consistent increase in sales over time, again with a drop at the end of the period.
+
+OSdata%>%model(stl=STL(diff_SumSales))%>%
+     components(OSdata)%>%
+     autoplot(diff_SumSales)->OSdcmp
+OSdcmp+labs(title="Organic Social Channel Decomposition",x="1 Month Scaling")
+#Trend is curvilinear over the period, but I wouldn't expect that to be a continuing trend of sinusoidal activity in the long run. This kind of nonlinearity suggests a more difficult to model series than I have timepoints to evaluate, limiting the models which will be useful.
+
+Sdata%>%model(stl=STL(SumSales))%>%
+     components(Sdata)%>%
+     autoplot(SumSales)->Sdcmp
+Sdcmp+labs(title="Store Channel Decomposition",x="1 Month Scaling")
+#Store Channel Trend is increasing over time, with a sharp fall at the end of the series.
+```
+
+### Decomposition Summary
+1. Every channel has a sharp decrease between November/December 2011, Store is by far the largest crash in sales for this data period.
+2. Display, Email, and Mailing channels are the kinds of distributions best predicted by linear models. Email has the highest trend increase in Sales, followed by Mailing, and Display is relatively unchanging.
+3. SEO is continually increasing with a consistent trend component, despite the shared crash.
+4. Organic Social displays a curvilinear trend component, which may be unusual (depending on longer time spans). This also makes Organic Social the worst candidate for these models, restricting what models can be used for this channel.
+5. Store saw an increase in trend from 04/2011 to 10/2011 which has slightly leveled off since. 
+
+### Modelling & Forecasting 
+
+```{r Modelling & Forecasting , include=TRUE}
+#Instead of going stage by stage, here I'll work through each series to give it some room to breathe.
+#Only additive models are examined here.
+
+######################################
+#Email,Display, and Mailing Channels:#
+######################################
+#The function for auto.arima is... touchy. I'm splitting these into univariate series to best estimate hyperparameters using the auto function before running them with explicit entries in one method.
+tsdata%>%filter(Channel=="Email")->email
+tsdata%>%filter(Channel=="Display")->display
+tsdata%>%filter(Channel=="Mailing")->mailing
+email<-auto.arima(email$SumSales,trace=FALSE,approximation=FALSE,stepwise=FALSE,seasonal=FALSE)#0,1,0
+display<-auto.arima(display$SumSales,trace=FALSE,approximation=FALSE,stepwise=FALSE,seasonal=FALSE)#1,1,0
+mailing<-auto.arima(mailing$SumSales,trace=FALSE,approximation=FALSE,stepwise=FALSE,seasonal=FALSE)#0,1,1
+
+#This is the first large aggregate model approach attempted.
+tsdata%>%model(
+  ETS1=ETS(SumSales~error("A")+trend("N")+season("N")),
+  ETS2=ETS(SumSales~error("A")+trend("A")+season("N")),
+  RW=RW(SumSales~drift()),
+  TSLM=TSLM(SumSales~trend()),
+  MEAN=MEAN(SumSales),
+  NAIVE=NAIVE(SumSales))%>%mutate(combination=(ETS1+ETS2+RW+TSLM+MEAN+NAIVE)/6)->tsmode
+
+accuracy(email)
+accuracy(display)
+accuracy(mailing)
+#The ARIMA Models aren't working out for these series unfortunately (I think the period is too short: See RMSE/MAE values below), so these are dropped.
+email<-NULL
+display<-NULL
+mailing<-NULL
+#After reviewing RMSE/MAE values, Naive and Mean models are consistently worse than others so I've dropped them both individually as well as in the combination model.
+
+tsdata%>%model(
+  ETS1=ETS(SumSales~error("A")+trend("N")+season("N")),
+  ETS2=ETS(SumSales~error("A")+trend("A")+season("N")),
+  RW=RW(SumSales~drift()),
+  TSLM=TSLM(SumSales~trend()))%>%
+  mutate(combination=(ETS1+ETS2+RW+TSLM)/4)->tsmodel
+
+print(accuracy(tsmodel),n=Inf)
+#Much improved combination model fit metrics with these models in play.
+#The best model is a simple Time Series Linear Model (TSLM).
+
+
+#Create Forecasts
+tsmodel%>%forecast(h="3 months")%>%filter(.model=="TSLM")->tsfc
+
+
+#Create visuals
+autoplot(tsfc,tsdata)
+
+
+#Generate CI's
+tsfc%>%hilo(level=90)->tsfc_ci
+unpack_hilo(tsfc_ci,c=('90%'),names_repair='minimal')->tsfc_hilo
+tsfc_hilo
+
+################
+#Store Channel:#
+################
+
+SModel<-auto.arima(Sdata$SumSales,trace=FALSE,approximation=FALSE,stepwise=FALSE,seasonal=FALSE)
+Sdata%>%model(
+  ETS1=ETS(SumSales~error("A")+trend("N")+season("N")),
+  ETS2=ETS(SumSales~error("A")+trend("A")+season("N")),
+  RW=RW(SumSales~drift()),
+  TSLM=TSLM(SumSales~trend())
+  )->SModel2
+#Evaluate the accuracy of these models with:
+accuracy(SModel2)
+#Results indicate better model fits (RMSE/MAE) with ETS (Exponential Smoothing)
+
+#Test residuals for 0 mean
+augment(SModel2)%>%features(.innov,mean)
+#There are some ETS model residuals to account for. In providing estimates the number shown in the third column should be reversed and applied to predictions to create a mean of zero.
+
+#Create Forecasts
+SModel2%>%forecast(h="3 months")->Sfc
+
+#Evaluate model for autocorrelation (i.e. if there's useful information left in the datatable)
+augment(SModel2)%>%features(.innov,ljung_box)
+#Results not significant, so we've got everything.
+
+
+
+#To see the best model (ETS2):
+autoplot(Sfc[Sfc$.model=="ETS2",],Sdata)+labs(title="Store Channel 3 Month Forecasts",x="1 Month Scaling")
+
+#Estimate 90% Confidence Interval
+Sfc%>%filter(.model=="ETS2")%>%hilo(level=90)->Sfc_ci
+unpack_hilo(Sfc_ci,c=('90%'),names_repair='minimal')->Sfc_hilo
+
+#################
+#Organic Social Social:#
+#################
+
+#Recall that OS is using differenced measures, not absolute sales units, but Fable's automatic process does transform back to absolute units at a surface level.
+
+#This combination approach generally provides a better fitting model than any single model.
+#Models are Mean, Mean with Drift (RW) and Naive forecasts.
+OSdata%>%model(
+  RW=RW(diff_SumSales~drift()),
+  MEAN=MEAN(diff_SumSales),
+  NAIVE=NAIVE(diff_SumSales))%>%mutate(combination=(RW+MEAN+NAIVE)/3)->OSModel
+
+#Evaluate the accuracy of these models with:
+accuracy(OSModel)
+#The Root Mean Square Error terms are substantially lower for the Mean prediction model
+#Mean Absolute Errors are also lower for the Mean model, meaning two model fit measures suggest the mean model.
+
+#Create Forecasts
+OSfc<-OSModel%>%forecast(h="3 months")
+
+#Evaluate forecasts for autocorrelation (i.e. if there's useful information left in the datatable)
+augment(OSModel)%>%features(.innov,ljung_box)
+
+#Mean Model and forecasts shown here:
+autoplot(OSfc[OSfc$.model=="MEAN",],OSdata)+labs(title="Organic Social Channel 3 Month Forecasts",x="1 Month Scaling")
+
+#Estimate 90% Confidence Interval
+OSfc%>%filter(.model=="MEAN")%>%hilo(level=90)->OSfc_ci
+unpack_hilo(OSfc_ci,c=('90%'),names_repair='minimal')->OSfc_hilo
+
+##############
+#SEO Channel:#
+##############
+SEOdata%>%model(
+  ETS1=ETS(SumSales~error("A")+trend("N")+season("N")),
+  ETS2=ETS(SumSales~error("A")+trend("A")+season("N")),
+  RW=RW(SumSales~drift()),
+  TSLM=TSLM(SumSales~trend()),
+  MEAN=MEAN(SumSales),
+  NAIVE=NAIVE(SumSales))%>%mutate(combination=(ETS1+ETS2+RW+TSLM+MEAN+NAIVE)/6)->SEOModel
+auto.arima(SEOdata$SumSales,trace=FALSE,approximation=FALSE,stepwise=FALSE,seasonal=FALSE)->SEOModel2
+#ARIMA Parms: (0,1,1)
+#Evaluate the accuracy
+accuracy(SEOModel)
+accuracy(SEOModel2)
+#Arima's still not a good choice here, one of the higher RMSE scores
+#An interesting tie between ETS2 and TSLM on different metrics of fit, I've checked both in this section left commented:
+################
+#SEOdata%>%model(ETS2=ETS(SumSales~error("A")+trend("A")+season("N")))->SEOETS
+#SEOdata%>%model(TSLM=TSLM(SumSales~trend()))->SEOTSLM
+#Create Forecasts
+#SEOETSfc<-SEOETS%>%forecast(h="3 months")
+#SEOTSLMfc<-SEOTSLM%>%forecast(h="3 months")
+#Evaluate forecasts
+#augment(SEOETS)%>%features(.innov,ljung_box)
+#augment(SEOTSLM)%>%features(.innov,ljung_box)
+#No issues, plot
+#autoplot(SEOETSfc,SEOdata)+labs(title="SEO Channel 3 Month Forecasts - ETS",x="1 Month Scaling")
+#autoplot(SEOTSLMfc,SEOdata)+labs(title="SEO Channel 3 Month Forecasts - TSLM",x="1 Month Scaling")
+################
+#The two models performed equally well, so to summarize using a single combination model of the two:
+SEOdata%>%model(combination=((ETS(SumSales~error("A")+trend("A")+season("N"))+TSLM(SumSales~trend()))/2))->SEOModel
+#Create Forecasts
+SEOfc<-SEOModel%>%forecast(h="3 months")
+#Evaluate model
+augment(SEOModel)%>%features(.innov,ljung_box)
+#No issues, plot
+autoplot(SEOfc,SEOdata)+labs(title="SEO Channel 3 Month Forecasts - ETS+TSLM",x="1 Month Scaling")
+```
+
+### Modelling & Forecasting Summary
+1. E-Mail,Display,& Mailing Channels:
+  a) These were the most amenable channels to modelling, so a larger range of models is tried here.
+  b) Attempts made using exponential smoothing (ETS1-2), Drift (RW), time-series linear modelling (TSLM), Mean, Naive, as well as an averaged model of all these methods (combination), ARIMA was also evaluated.
+  c) TSLM was the best fitting model to the available data given RMSE and MAE model fit measures
+  
+2. Store Channel:
+  a) The crash at the end of the series was very substantial for this channel, so fewer models can be utilized accurately.
+  b) Attempts made using exponential smoothing (ETS1-2), Drift (RW), and time-series linear modelling (TSLM)
+  c) The best fitting models was exponential smoothing with an additive trend component and no seasonality given RMSE and MAE model fit measures
+  
+3. Organic Social Channel:
+  a) The least amenable channel for forecasting, only basic methods are warranted without a more long term analysis.
+  b) Attempts made using Mean, Drift (RW) and Naive forecasts.
+  c) The best fitting model by a good margin, given RMSE and MAE model fit measures, is the mean model, otherwise known as taking the average of the series and using it as the point estimate for future months.
+
+4. SEO Channel:
+  a) Average channel by comparison to the others, went ahead and tried all prior models with this channel.
+  b) Successes found with TSLM and ETS2 models, but little difference between them.
+  c) Went forward with combining the two models for a hybrid approach.
+
+***

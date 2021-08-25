@@ -1,0 +1,96 @@
+---
+title: "Comoto Cover"
+author: "Malia Crane"
+date: "8/24/2021"
+output: html_document
+---
+
+```{r Libraries,include=FALSE,message=FALSE}
+library(tidyverse)
+library(fpp3)
+#Import Data, classify column data types
+data <- read.csv("C:/Users/cran5028/Downloads/ComotoCrane-main/ecom_data.csv", row.names=NULL, stringsAsFactors=TRUE)
+data$CustomerID<-as.factor(data$CustomerID)
+data$InvoiceDay<-as.Date(data$InvoiceDay)
+data$InvoiceDay<-as.POSIXct(data$InvoiceDay,format="%Y-%M-%D")
+data$ID <- as.character(seq.int(nrow(data)))
+
+#Filter out identified issues with data, negative sales amounts and SKU outliers:
+data%>%filter(Sales >0)->data
+data[!(data$SKU=="C2" | data$SKU=="BANK CHARGES" | data$SKU=="CRUK" | data$SKU=="D" | data$SKU=="DOT" | data$SKU=="M" | data$SKU=="PADS" | data$SKU=="POST"),]->data
+droplevels(data$SKU)
+```
+### Overview
+This file holds a brief overview and narrative responses for the technical prompt.
+
+Other files include:
+
+> ComotoCraneDescriptives - A review of the dataset and its characteristics.
+
+> ComotoCraneTemporal - An analysis first creating Non-refunded orders in the 90 day window, followed by the full time series analysis. 
+
+### Description of Sales Trends
+```{r TotalSalesPlot,echo=FALSE,message=FALSE}
+data%>%
+     filter(Sales>0)%>%
+     select(InvoiceDay,Sales)%>%
+     arrange(InvoiceDay,Sales)%>%
+     mutate(month=month(InvoiceDay),year=year(InvoiceDay))%>%
+     group_by(year,month)%>%
+     summarise(SumSales=sum(Sales))%>%
+     arrange(year,month,SumSales)->tsdata
+
+
+ tsdata$tsunit<-paste(paste(tsdata$year,"-"),tsdata$month)
+ tsdata[,c(ncol(tsdata),1:(ncol(tsdata)-1))]->tsdata
+ tsdata$year<-NULL
+ tsdata$month<-NULL
+ tsdata%>%arrange(tsunit)->tsdata
+ 
+ tsdata%>%
+     mutate(Month=yearmonth(tsunit))%>%
+     as_tsibble(index=Month)->tsdata
+ tsdata$tsunit<-NULL
+ 
+ autoplot(tsdata,SumSales)+labs(title="Sum of Sales by Month",y="Sum of Sales",x="1 Month Scaling")
+```
+
+> Sales have been on an increasing volume during the period, with a marked increase between July and November 2011, ending with a dramatic decline during December 2011. 
+
+```{r TotalSalesPlot2,echo=FALSE,message=FALSE}
+data%>%
+  filter(Sales>0)%>%
+  select(InvoiceDay,Channel,Sales)%>%
+  arrange(Channel,InvoiceDay,Sales)%>%
+  mutate(month=month(InvoiceDay),year=year(InvoiceDay))%>%
+  group_by(year,month,Channel)%>%
+  summarise(SumSales=sum(Sales))%>%
+  arrange(year,month,SumSales)->tsdata
+
+#Making a better looking date column for visuals.
+tsdata$tsunit<-paste(paste(tsdata$year,"-"),tsdata$month)
+tsdata[,c(ncol(tsdata),1:(ncol(tsdata)-1))]->tsdata
+tsdata$year<-NULL
+tsdata$month<-NULL
+tsdata%>%arrange(Channel,tsunit)->tsdata
+
+tsdata%>%
+mutate(Month=yearmonth(tsunit))%>%
+as_tsibble(index=Month,key=Channel)->tsdata
+
+#Remove extraneous column
+tsdata$tsunit<-NULL
+
+autoplot(tsdata,SumSales)+labs(title="Sum of Sales by Month and Channel",y="Sum of Sales",x="1 Month Scaling")
+```
+
+> This decline was experienced across all channels with the exception of Organic Social which saw an increase in sales. Forecasted sales estimates for the next 90 days show a gradual increase in sales to the prior year's observations, strongest for the Store channel.
+
+> Customer metrics provide additional insights, with a typical Sales Order having a median of \$34.8 and a typical Customer purchase at \$32.5. During the period at a total sales level, most customers have a median sales purchase total of \$2.2k. 
+
+
+### Recommendations to Increase Sales
+
+> 1: Store Channel is associated with the highest total sum of sale profits, but is also associated with the greatest crash seen in nearly all channels during Nov/Dec 2011. The most stable path forward is in understanding the cause of this drop and formenting a contingency plan. Although not a top contributor, Organic Social has steady growth and is the sole increasing channel during the crash period, suggesting development in this area may bolster resiliency against these types of crashes.
+
+> 2: Optimising suggested items/item prices to customers nearing \$35 (the median per-sale per customer) to generate slightly higher total per-sale costs (e.g. ~\$38). In a similar vein, customers were found to have an average of 15 and 22 items purchased per year/order (Median item quantity per period/order). A lower average quantity per period than quantity per order indicates that undocumented issues may exist with quality/delivery of services and that customers may be not be returning. 
